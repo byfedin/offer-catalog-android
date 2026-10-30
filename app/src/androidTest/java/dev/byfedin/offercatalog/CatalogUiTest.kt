@@ -1,5 +1,6 @@
 package dev.byfedin.offercatalog
 
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.test.espresso.Espresso
@@ -60,15 +61,13 @@ class CatalogUiTest {
 
     @Test
     fun returnFromDetailsKeepsScrolledPosition() {
+        val catalog = compose.onNodeWithTag("catalog-list")
+        val offerKey = "offer-the-reading-room"
+        // Off-screen lazy items have no semantic node. Wait for their key, then scroll to them.
         compose.waitUntil(5_000) {
-            compose
-                .onAllNodesWithTag("offer-the-art-of-noticing")
-                .fetchSemanticsNodes()
-                .isNotEmpty()
+            catalog.fetchSemanticsNode().config[SemanticsProperties.IndexForKey](offerKey) >= 0
         }
-        compose
-            .onNodeWithTag("catalog-list")
-            .performScrollToNode(hasTestTag("offer-the-reading-room"))
+        catalog.performScrollToKey(offerKey)
         compose.onNodeWithTag("offer-the-reading-room").performClick()
         compose.waitUntil(5_000) {
             compose.onAllNodesWithText("About this offer").fetchSemanticsNodes().isNotEmpty()
