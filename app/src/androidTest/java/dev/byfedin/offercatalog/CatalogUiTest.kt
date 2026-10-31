@@ -3,8 +3,10 @@ package dev.byfedin.offercatalog
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.text.AnnotatedString
 import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -56,7 +58,12 @@ class CatalogUiTest {
         compose.waitUntil(5_000) {
             compose.onAllNodesWithText("The art of noticing").fetchSemanticsNodes().isNotEmpty()
         }
-        compose.onNodeWithTag("search").performScrollTo().assertTextContains("")
+        compose
+            .onNodeWithTag("search")
+            .performScrollTo()
+            .assert(
+                SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString(""))
+            )
     }
 
     @Test
@@ -68,11 +75,27 @@ class CatalogUiTest {
             catalog.fetchSemanticsNode().config[SemanticsProperties.IndexForKey](offerKey) >= 0
         }
         catalog.performScrollToKey(offerKey)
-        compose.onNodeWithTag("offer-the-reading-room").performClick()
+        catalog.performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.ScrollBy) {
+            it(0f, 80f)
+        }
+        val anchor = compose.onNodeWithTag(offerKey)
+        val topBefore = anchor.getUnclippedBoundsInRoot().top.value
+        val scrollBefore =
+            catalog.fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange].value()
+        anchor.performClick()
         compose.waitUntil(5_000) {
             compose.onAllNodesWithText("About this offer").fetchSemanticsNodes().isNotEmpty()
         }
         Espresso.pressBack()
-        compose.onNodeWithTag("offer-the-reading-room").assertIsDisplayed()
+        anchor.assertIsDisplayed()
+        assertEquals(topBefore, anchor.getUnclippedBoundsInRoot().top.value, 0.5f)
+        assertEquals(
+            scrollBefore,
+            catalog
+                .fetchSemanticsNode()
+                .config[SemanticsProperties.VerticalScrollAxisRange]
+                .value(),
+            0.0001f,
+        )
     }
 }

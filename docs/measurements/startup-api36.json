@@ -1,0 +1,19 @@
+{
+  "mode": "startup",
+  "api": "36",
+  "model": "sdk_gphone64_arm64",
+  "emulator": true,
+  "build_type": "debug",
+  "metric": "am start -W TotalTime (ms)",
+  "samples_ms": [
+    583,
+    577,
+    582,
+    576,
+    575
+  ],
+  "median_ms": 577,
+  "min_ms": 575,
+  "max_ms": 583,
+  "scope": "Cold process, warm filesystem; Activity display, not catalog readiness. No speed threshold."
+}
