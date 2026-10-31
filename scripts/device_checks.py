@@ -62,7 +62,7 @@ def main():
 
     def launch():
         return shell(
-            "am", "start", "-W", "-a", "android.intent.action.MAIN",
+            "am", "start", "-a", "android.intent.action.MAIN",
             "-c", "android.intent.category.LAUNCHER", "-f", "0x10200000", "-n", ACTIVITY,
         )
 
@@ -76,7 +76,7 @@ def main():
     if args.mode == "process-death":
         # Force-stop establishes a fresh scenario; it is not the process-death operation.
         shell("am", "force-stop", PACKAGE)
-        shell("am", "start", "-W", "-a", "android.intent.action.MAIN", "-c", "android.intent.category.LAUNCHER", "-f", "0x10008000", "-n", ACTIVITY)
+        shell("am", "start", "-a", "android.intent.action.MAIN", "-c", "android.intent.category.LAUNCHER", "-f", "0x10008000", "-n", ACTIVITY)
         wait_for(
             lambda: visible_text("Search offers"),
             "search field",

@@ -59,6 +59,8 @@ jobs:
         with:
           api-level: ${{ matrix.api }}
           arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader -feature -Vulkan -no-snapshot -noaudio -no-boot-anim -memory 3072
           profile: pixel_2
           disable-animations: true
           script: |
