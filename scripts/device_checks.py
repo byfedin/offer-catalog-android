@@ -95,9 +95,13 @@ def main():
         shell("input", "keyevent", "3")
         def is_background():
             activity = shell("dumpsys", "activity", "activities")
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.with_name("activity-before-kill.txt").write_text(activity)
             resumed = [line for line in activity.splitlines() if "ResumedActivity" in line or "mResumedActivity" in line]
-            return bool(resumed) and all(PACKAGE not in line for line in resumed)
-        wait_for(is_background, "activity to leave the foreground")
+            records = [block for block in activity.split("Hist #")[1:] if PACKAGE in block.splitlines()[0]]
+            saved = any("state=stopped" in block.lower() and "havestate=true" in block.lower() for block in records)
+            return bool(resumed) and all(PACKAGE not in line for line in resumed) and saved
+        wait_for(is_background, "stopped activity with saved instance state")
         # run-as is available for this debug APK; SIGKILL preserves the retained task.
         if not old_pid.isdigit():
             raise AssertionError("Expected a single app process")
