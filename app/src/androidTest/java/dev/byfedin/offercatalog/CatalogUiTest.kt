@@ -3,7 +3,6 @@ package dev.byfedin.offercatalog
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
-import androidx.compose.ui.text.AnnotatedString
 import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
@@ -62,7 +61,9 @@ class CatalogUiTest {
             .onNodeWithTag("search")
             .performScrollTo()
             .assert(
-                SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString(""))
+                SemanticsMatcher("Editable text is empty") {
+                    it.config[SemanticsProperties.EditableText].text.isEmpty()
+                }
             )
     }
 
@@ -86,7 +87,7 @@ class CatalogUiTest {
         compose.waitUntil(5_000) {
             compose.onAllNodesWithText("About this offer").fetchSemanticsNodes().isNotEmpty()
         }
-        Espresso.pressBack()
+        compose.onNodeWithContentDescription("Back to catalog").performClick()
         compose.waitUntil(5_000) { anchor.isDisplayed() }
         compose.waitForIdle()
         anchor.assertIsDisplayed()
