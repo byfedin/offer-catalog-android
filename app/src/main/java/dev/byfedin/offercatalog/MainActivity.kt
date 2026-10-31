@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -42,6 +43,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun OfferCatalogApp(repository: OfferRepository) {
     val nav = rememberNavController()
+    // Navigation can dispose the catalog composition while pages continue loading.
+    val catalogListState = rememberLazyListState()
     val entry by nav.currentBackStackEntryAsState()
     val inDetails = entry?.destination?.route == "offer/{id}"
     Scaffold(
@@ -90,6 +93,7 @@ fun OfferCatalogApp(repository: OfferRepository) {
                         val state by model.state.collectAsStateWithLifecycle()
                         CatalogScreen(
                             state,
+                            catalogListState,
                             model::setQuery,
                             model::setCategory,
                             model::resetFilters,

@@ -3,7 +3,6 @@ package dev.byfedin.offercatalog
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
-import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -17,7 +16,7 @@ class CatalogUiTest {
     @Test
     fun searchOpenDetailsAndReturnPreservesSearch() {
         compose.onNodeWithTag("search").performTextInput("coffee")
-        Espresso.closeSoftKeyboard()
+        compose.onNodeWithTag("search").performImeAction()
         compose.waitUntil(5_000) {
             compose.onAllNodesWithText("Coffee, explained").fetchSemanticsNodes().isNotEmpty()
         }
@@ -25,7 +24,7 @@ class CatalogUiTest {
         compose.waitUntil(5_000) {
             compose.onAllNodesWithText("About this offer").fetchSemanticsNodes().isNotEmpty()
         }
-        Espresso.pressBack()
+        compose.onNodeWithContentDescription("Back to catalog").performClick()
         compose.onNodeWithTag("search").performScrollTo().assertTextContains("coffee")
         compose.onNodeWithText("Coffee, explained").assertExists()
     }
@@ -34,7 +33,7 @@ class CatalogUiTest {
     fun categoryAndQuerySurviveActivityRecreation() {
         compose.onNodeWithTag("category-TRAVEL").performClick()
         compose.onNodeWithTag("search").performTextInput("coast")
-        Espresso.closeSoftKeyboard()
+        compose.onNodeWithTag("search").performImeAction()
         compose.waitUntil(5_000) {
             compose.onAllNodesWithText("Along the coast").fetchSemanticsNodes().isNotEmpty()
         }
@@ -49,7 +48,7 @@ class CatalogUiTest {
     @Test
     fun emptySearchCanResetFilters() {
         compose.onNodeWithTag("search").performTextInput("zzzz-no-result")
-        Espresso.closeSoftKeyboard()
+        compose.onNodeWithTag("search").performImeAction()
         compose.waitUntil(5_000) {
             compose.onAllNodesWithText("No matches this time").fetchSemanticsNodes().isNotEmpty()
         }

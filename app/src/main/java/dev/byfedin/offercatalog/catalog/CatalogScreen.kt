@@ -3,9 +3,9 @@ package dev.byfedin.offercatalog.catalog
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 @Composable
 fun CatalogScreen(
     state: CatalogState,
+    list: LazyListState,
     onQuery: (String) -> Unit,
     onCategory: (Category?) -> Unit,
     onReset: () -> Unit,
@@ -35,7 +36,6 @@ fun CatalogScreen(
     onRetry: () -> Unit,
     onOffer: (String) -> Unit,
 ) {
-    val list = rememberLazyListState()
     val focus = LocalFocusManager.current
     val results = state.content as? CatalogContent.Results
     val currentLoadMore by rememberUpdatedState(onLoadMore)
