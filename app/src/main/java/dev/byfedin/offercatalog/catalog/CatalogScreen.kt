@@ -13,7 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -36,7 +36,7 @@ fun CatalogScreen(
     onRetry: () -> Unit,
     onOffer: (String) -> Unit,
 ) {
-    val focus = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
     val results = state.content as? CatalogContent.Results
     val currentLoadMore by rememberUpdatedState(onLoadMore)
     LaunchedEffect(list, results?.offers?.size, results?.append) {
@@ -82,7 +82,7 @@ fun CatalogScreen(
                 shape = RoundedCornerShape(16.dp),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = { focus.clearFocus() }),
+                keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
                 leadingIcon = {
                     Icon(painterResource(R.drawable.ic_search), contentDescription = null)
                 },
@@ -108,7 +108,7 @@ fun CatalogScreen(
                     FilterChip(
                         selected = state.filter.category == null,
                         onClick = {
-                            focus.clearFocus()
+                            keyboard?.hide()
                             onCategory(null)
                         },
                         label = { Text(stringResource(R.string.all_categories)) },
@@ -118,7 +118,7 @@ fun CatalogScreen(
                     FilterChip(
                         selected = state.filter.category == category,
                         onClick = {
-                            focus.clearFocus()
+                            keyboard?.hide()
                             onCategory(category)
                         },
                         label = { Text(stringResource(category.label)) },
@@ -176,7 +176,7 @@ fun CatalogScreen(
                     items(content.offers, key = { "offer-${it.id}" }, contentType = { "offer" }) {
                         offer ->
                         OfferCard(offer) {
-                            focus.clearFocus()
+                            keyboard?.hide()
                             onOffer(offer.id)
                         }
                     }
