@@ -39,7 +39,11 @@ def main():
             if value:
                 return value
             time.sleep(0.2)
-        raise AssertionError(f"Timed out: {description}")
+        tree = hierarchy()
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        ET.ElementTree(tree).write(args.output.with_suffix(".xml"), encoding="utf-8")
+        visible = [(n.get("text"), n.get("class")) for n in tree.iter("node") if n.get("text")]
+        raise AssertionError(f"Timed out: {description}; visible content: {visible}")
 
     def hierarchy():
         shell("uiautomator", "dump", "/sdcard/offer-check.xml")
@@ -72,12 +76,12 @@ def main():
     if args.mode == "process-death":
         # Force-stop establishes a fresh scenario; it is not the process-death operation.
         shell("am", "force-stop", PACKAGE)
-        shell("am", "start", "-a", "android.intent.action.MAIN", "-c", "android.intent.category.LAUNCHER", "-f", "0x10008000", "-n", ACTIVITY)
+        shell("am", "start", "-W", "-a", "android.intent.action.MAIN", "-c", "android.intent.category.LAUNCHER", "-f", "0x10008000", "-n", ACTIVITY)
         wait_for(
-            lambda: find(lambda n: n.get("class") == "android.widget.EditText") is not None,
+            lambda: visible_text("Search offers"),
             "search field",
         )
-        tap(find(lambda n: n.get("class") == "android.widget.EditText"))
+        tap(find(lambda n: n.get("text") == "Search offers"))
         shell("input", "text", "coast")
         shell("input", "keyevent", "4")
         travel = find(lambda n: n.get("text") == "Travel" and n.get("clickable") == "true")
@@ -89,16 +93,23 @@ def main():
         wait_for(lambda: visible_text("Along the coast"), "filtered offer")
         old_pid = shell("pidof", PACKAGE)
         shell("input", "keyevent", "3")
-        # Wait for the background activity to become eligible for am kill.
-        def kill_background():
-            shell("am", "kill", PACKAGE)
-            processes = shell("ps", "-A")
-            return not any(line.split()[-1:] == [PACKAGE] for line in processes.splitlines())
-        wait_for(kill_background, "background process termination")
+        def is_background():
+            activity = shell("dumpsys", "activity", "activities")
+            resumed = [line for line in activity.splitlines() if "ResumedActivity" in line or "mResumedActivity" in line]
+            return bool(resumed) and all(PACKAGE not in line for line in resumed)
+        wait_for(is_background, "activity to leave the foreground")
+        # run-as is available for this debug APK; SIGKILL preserves the retained task.
+        if not old_pid.isdigit():
+            raise AssertionError("Expected a single app process")
+        shell("run-as", PACKAGE, "kill", "-9", old_pid)
+        wait_for(
+            lambda: not any(line.split()[-1:] == [PACKAGE] for line in shell("ps", "-A").splitlines()),
+            "background process termination",
+        )
         launch()
         wait_for(lambda: visible_text("Along the coast"), "restored filtered result")
         tree = hierarchy()
-        fields = [n for n in tree.iter("node") if n.get("class") == "android.widget.EditText"]
+        fields = [n for n in tree.iter("node") if n.get("text") == "coast"]
         assert any(n.get("text") == "coast" for n in fields), "Search query was lost"
         categories = [n for n in tree.iter("node") if n.get("text") == "Travel" or any(c.get("text") == "Travel" for c in n)]
         assert any(n.get("checked") == "true" or n.get("selected") == "true" for n in categories), "Category was lost"
