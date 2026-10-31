@@ -88,11 +88,12 @@ class CatalogUiTest {
             compose.onAllNodesWithText("About this offer").fetchSemanticsNodes().isNotEmpty()
         }
         compose.onNodeWithContentDescription("Back to catalog").performClick()
-        compose.waitUntil(5_000) { anchor.isDisplayed() }
+        compose.waitUntil(5_000) {
+            compose.onAllNodesWithTag("catalog-list").fetchSemanticsNodes().isNotEmpty()
+        }
         compose.waitForIdle()
-        anchor.assertIsDisplayed()
-        assertEquals(topBefore, anchor.getUnclippedBoundsInRoot().top.value, 0.5f)
         assertEquals(
+            "Catalog scroll after navigation:\n${compose.onRoot().printToString()}",
             scrollBefore,
             catalog
                 .fetchSemanticsNode()
@@ -100,5 +101,7 @@ class CatalogUiTest {
                 .value(),
             0.0001f,
         )
+        anchor.assertIsDisplayed()
+        assertEquals(topBefore, anchor.getUnclippedBoundsInRoot().top.value, 0.5f)
     }
 }
