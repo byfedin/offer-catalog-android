@@ -46,7 +46,12 @@ def main():
         raise AssertionError(f"Timed out: {description}; visible content: {visible}")
 
     def hierarchy():
-        shell("uiautomator", "dump", "/sdcard/offer-check.xml")
+        status = shell("uiautomator", "dump", "/sdcard/offer-check.xml")
+        if "dumped to:" not in status:
+            # A new window can briefly have no accessibility root during launch.
+            if "null root node" in status.lower() or "could not get idle state" in status.lower():
+                return ET.Element("hierarchy")
+            raise AssertionError(f"Accessibility dump failed: {status}")
         return ET.fromstring(shell("cat", "/sdcard/offer-check.xml"))
 
     def find(predicate):
@@ -59,6 +64,19 @@ def main():
     def visible_text(value):
         # Element objects with no children are falsey, so return a Boolean explicitly.
         return find(lambda n: n.get("text") == value) is not None
+
+    def reveal_text(value):
+        for _ in range(6):
+            tree = hierarchy()
+            if any(n.get("text") == value for n in tree.iter("node")):
+                return
+            container = next((n for n in tree.iter("node") if n.get("scrollable") == "true"), None)
+            if container is None:
+                raise AssertionError("No scrollable catalog found")
+            x1, y1, x2, y2 = map(int, re.findall(r"\d+", container.attrib["bounds"]))
+            x = str((x1 + x2) // 2)
+            shell("input", "swipe", x, str(y1 + (y2 - y1) * 3 // 4), x, str(y1 + (y2 - y1) // 4), "250")
+        raise AssertionError(f"Catalog item not found after scrolling: {value}")
 
     def launch():
         return shell(
@@ -90,7 +108,8 @@ def main():
         if travel is None:
             raise AssertionError("Travel category is not accessible")
         tap(travel)
-        wait_for(lambda: visible_text("Along the coast"), "filtered offer")
+        wait_for(lambda: visible_text("Loaded · 1"), "filtered collection")
+        reveal_text("Along the coast")
         old_pid = shell("pidof", PACKAGE)
         shell("input", "keyevent", "3")
         def is_background():
@@ -111,12 +130,14 @@ def main():
             "background process termination",
         )
         launch()
-        wait_for(lambda: visible_text("Along the coast"), "restored filtered result")
+        wait_for(lambda: visible_text("coast"), "restored search query")
         tree = hierarchy()
         fields = [n for n in tree.iter("node") if n.get("text") == "coast"]
         assert any(n.get("text") == "coast" for n in fields), "Search query was lost"
         categories = [n for n in tree.iter("node") if n.get("text") == "Travel" or any(c.get("text") == "Travel" for c in n)]
         assert any(n.get("checked") == "true" or n.get("selected") == "true" for n in categories), "Category was lost"
+        wait_for(lambda: visible_text("Loaded · 1"), "restored filtered collection")
+        reveal_text("Along the coast")
         assert shell("pidof", PACKAGE) != old_pid, "The process was not replaced"
         result.update(passed=True, query="coast", category="Travel", task_preserved=True, process_replaced=True)
     else:
