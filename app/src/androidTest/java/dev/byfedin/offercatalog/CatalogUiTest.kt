@@ -87,6 +87,8 @@ class CatalogUiTest {
             compose.onAllNodesWithText("About this offer").fetchSemanticsNodes().isNotEmpty()
         }
         Espresso.pressBack()
+        compose.waitUntil(5_000) { anchor.isDisplayed() }
+        compose.waitForIdle()
         anchor.assertIsDisplayed()
         assertEquals(topBefore, anchor.getUnclippedBoundsInRoot().top.value, 0.5f)
         assertEquals(
