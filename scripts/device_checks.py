@@ -117,7 +117,7 @@ def main():
             args.output.parent.mkdir(parents=True, exist_ok=True)
             args.output.with_name("activity-before-kill.txt").write_text(activity)
             resumed = [line for line in activity.splitlines() if "ResumedActivity" in line or "mResumedActivity" in line]
-            records = [block for block in activity.split("Hist #")[1:] if PACKAGE in block.splitlines()[0]]
+            records = [block for block in re.split(r"Hist\s+#", activity)[1:] if PACKAGE in block.splitlines()[0]]
             saved = any("state=stopped" in block.lower() and "havestate=true" in block.lower() for block in records)
             return bool(resumed) and all(PACKAGE not in line for line in resumed) and saved
         wait_for(is_background, "stopped activity with saved instance state")
