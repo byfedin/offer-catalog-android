@@ -4,6 +4,8 @@ An independent Android demo by [Evgenii Fedin](https://github.com/byfedin). Brow
 
 The project focuses on a small set of engineering problems: cancelling obsolete work, preserving useful content when pagination fails, restoring search parameters and testing asynchronous behaviour. It is not a commercial product or a client for a live service.
 
+**Case study:** [byfedin.dev/offer-catalog](https://byfedin.dev/offer-catalog), with the architecture, the decisions and their trade-offs, and how the behaviour is tested.
+
 <p>
   <img src="docs/screenshots/catalog-light.png" width="240" alt="Catalog in the light theme" />
   <img src="docs/screenshots/detail-light.png" width="240" alt="Offer details in the light theme" />
@@ -71,6 +73,8 @@ UI events → ViewModel → OfferRepository → local fixtures
 3. **Explicit content states.** Initial loading and failure are separate from results. Results own their continuation offset and append status, so an append error keeps the visible collection. The busy flag is set before launching a request; repeated scroll or retry events cannot enqueue the same page. Appended offers are deduplicated by stable ID.
 4. **Small dependency graph.** The activity supplies one repository through ViewModel factories. There is no DI framework, pass-through use-case layer or base class hierarchy. The repository interface is the asynchronous boundary used by the tests.
 5. **Navigation owns screen lifetime.** Each destination owns its ViewModel. Lifecycle-aware collection stops unnecessary UI observation. The catalog remains on the back stack. Its saveable lazy-list state is owned above `NavHost`, so disposing the catalog composition while a page arrives cannot recreate its scroll position. Search parameters live in `SavedStateHandle`. Cancellation is never converted to a visible error; only the expected catalog-unavailable exception becomes a retry state.
+
+Longer write-ups: [Invalidate before you debounce](https://byfedin.dev/notes/invalidate-before-debounce) · [A failed page shouldn't wipe the list](https://byfedin.dev/notes/failed-page-keeps-the-list) · [Testing process death, not just rotation](https://byfedin.dev/notes/testing-process-death)
 
 ## Checks
 
